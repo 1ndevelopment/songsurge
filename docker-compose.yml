@@ -1,0 +1,42 @@
+services:
+  backend:
+    build: ./backend
+    container_name: songsurge-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./music:/app/music:ro
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+    networks:
+      - songsurge-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build: ./frontend
+    container_name: songsurge-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - songsurge-network
+    restart: unless-stopped
+
+networks:
+  songsurge-network:
+    driver: bridge
+
+volumes:
+  music:
+    driver: local
